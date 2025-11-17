@@ -289,6 +289,7 @@ function openCreateOrEditTimerModal(timer?: Timer, timerId?: number) {
     title.value = editTimer.value.title;
     time.value = editTimer.value.time;
     autoStop.value = editTimer.value.autoStop;
+    isProgressBar.value = editTimer.value.isProgressBar;
 
     isCreateOrEditTimerModal.value = true;
     return;
