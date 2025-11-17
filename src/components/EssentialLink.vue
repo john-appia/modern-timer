@@ -1,5 +1,5 @@
 <template>
-  <q-item clickable tag="a" target="_blank" :href="link">
+  <q-item clickable :to="link" exact exact-active-class="text-accent" :disable="disable">
     <q-item-section v-if="icon" avatar>
       <q-icon :name="icon" />
     </q-item-section>
@@ -17,6 +17,7 @@ export interface EssentialLinkProps {
   caption?: string;
   link?: string;
   icon?: string;
+  disable?: boolean;
 }
 
 withDefaults(defineProps<EssentialLinkProps>(), {

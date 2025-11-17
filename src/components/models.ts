@@ -6,3 +6,9 @@ export interface Todo {
 export interface Meta {
   totalCount: number;
 }
+
+export type Timer = {
+  title: string;
+  time: string;
+  autoStop: boolean;
+};

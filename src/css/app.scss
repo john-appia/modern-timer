@@ -1,1 +1,20 @@
 // app global css in SCSS form
+
+.body--light {
+  background-color: $grey-1;
+  .q-drawer__content {
+    background-color: $grey-3;
+  }
+}
+
+.body--dark {
+  //   background-color: $grey-1;
+  .q-drawer__content {
+    background-color: hsla(0, 0%, 7%, 0.745);
+  }
+}
+
+.none-enter-active,
+.none-leave-active {
+  transition: none;
+}
