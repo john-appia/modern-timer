@@ -6,12 +6,15 @@ export const useTimerStore = defineStore('timer', {
     timers: [
       {
         title: 'First timer',
-        time: '02:30',
+        time: '00:01:00',
         autoStop: false,
+        isProgressBar: true,
       },
     ] as (Timer & { _seconds?: number })[],
     intervalId: null as number | null,
     autoStopTriggered: false,
+    elapsedTime: 0,
+    totalSeconds: 0,
   }),
 
   getters: {
@@ -35,6 +38,15 @@ export const useTimerStore = defineStore('timer', {
     startTimer() {
       if (this.intervalId !== null) return;
 
+      const current = this.timers[0];
+      if (!current) return;
+
+      if (!current._seconds) {
+        current._seconds = this.parseTimeToSeconds(current.time);
+        this.totalSeconds = current._seconds;
+        this.elapsedTime = 0;
+      }
+
       this.intervalId = setInterval(() => this.tick(), 1000) as unknown as number;
     },
 
@@ -54,12 +66,13 @@ export const useTimerStore = defineStore('timer', {
       const current = this.timers[0];
 
       if (current) {
-        console.log('in tick');
         if (!current._seconds) {
           current._seconds = this.parseTimeToSeconds(current.time);
         }
 
         current._seconds--;
+        this.elapsedTime++;
+
         current.time = this.formatSecondsToTime(current._seconds);
 
         if (current._seconds <= 0) {
@@ -74,14 +87,20 @@ export const useTimerStore = defineStore('timer', {
           if (this.timers.length === 0) {
             this.stopTimer();
           } else {
-            delete this.timers[0]!._seconds;
+            // delete this.timers[0]!._seconds;
+            const next = this.timers[0];
+            delete next!._seconds;
+
+            // init pour le prochain
+            next!._seconds = this.parseTimeToSeconds(next!.time);
+            this.totalSeconds = next!._seconds!;
+            this.elapsedTime = 0;
           }
         }
       }
     },
 
     parseTimeToSeconds(time: string) {
-      console.log('in parseTimeToSeconds');
       const parts = time.split(':').map(Number);
       if (parts.length === 2) return parts[0]! * 60 + parts[1]!;
       if (parts.length === 3) return parts[0]! * 3600 + parts[1]! * 60 + parts[2]!;
@@ -89,7 +108,6 @@ export const useTimerStore = defineStore('timer', {
     },
 
     formatSecondsToTime(total: number) {
-      console.log('in formatSecondsToTime');
       const h = Math.floor(total / 3600);
       const m = Math.floor((total % 3600) / 60);
       const s = total % 60;

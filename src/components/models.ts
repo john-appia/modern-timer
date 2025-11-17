@@ -11,4 +11,5 @@ export type Timer = {
   title: string;
   time: string;
   autoStop: boolean;
+  isProgressBar: boolean;
 };

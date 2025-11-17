@@ -37,7 +37,12 @@
         </q-item-section>
 
         <q-item-section>
-          <q-item-label>{{ timer.title }}</q-item-label>
+          <q-item-label
+            >{{ timer.title }}
+            <q-badge v-if="timer.autoStop" align="top" color="red"
+              >Time out activé</q-badge
+            ></q-item-label
+          >
           <q-item-label caption lines="1">{{ timer.time }}</q-item-label>
         </q-item-section>
 
@@ -109,15 +114,15 @@
             <q-input
               filled
               color="accent"
-              hint="hh:mm"
+              hint="hh:mm:ss"
               v-model="time"
-              mask="time"
-              :rules="['time']"
+              mask="fulltime"
+              :rules="['fulltime']"
             >
               <template v-slot:append>
                 <q-icon name="access_time" class="cursor-pointer">
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-time v-model="time">
+                    <q-time v-model="time" with-seconds format24h>
                       <div class="row items-center justify-end">
                         <q-btn v-close-popup label="Close" color="primary" flat />
                       </div>
@@ -127,7 +132,8 @@
               </template>
             </q-input>
 
-            <q-toggle v-model="autoStop" label='afficher "TIME OUT" après la fin du temps ?' />
+            <q-toggle v-model="autoStop" label='Afficher "TIME OUT" après la fin du temps ?' />
+            <q-toggle v-model="isProgressBar" label="Activer la bar de progression ?" />
           </q-form>
         </q-card-section>
 
@@ -165,15 +171,24 @@
       transition-show="slide-up"
       transition-hide="slide-down"
     >
-      <q-card class="text-white" :class="timerStore.autoStopTriggered ? 'bg-red' : 'bg-purple-3'">
+      <q-card class="text-white" :class="timerStore.autoStopTriggered ? 'bg-red' : 'bg-dark'">
         <q-bar>
           <q-space />
 
           <q-btn disable dense flat icon="double_arrow">
             <q-tooltip class="bg-white text-primary">suivant</q-tooltip>
           </q-btn>
-          <q-btn disable dense flat icon="stop_circle">
+          <q-btn
+            v-if="timerStore.intervalId"
+            dense
+            flat
+            icon="stop_circle"
+            @click="timerStore.stopTimer()"
+          >
             <q-tooltip class="bg-white text-primary">stop</q-tooltip>
+          </q-btn>
+          <q-btn v-else dense flat icon="play_circle" @click="timerStore.startTimer()">
+            <q-tooltip class="bg-white text-primary">start</q-tooltip>
           </q-btn>
           <q-btn dense flat icon="close" v-close-popup>
             <q-tooltip class="bg-white text-primary">Close</q-tooltip>
@@ -184,6 +199,17 @@
           <div v-if="!timerStore.autoStopTriggered" class="runningTimer text-center">
             <p class="runningTimer__title">{{ timerStore.currentTimer?.title }}</p>
             <p class="runningTimer__time">{{ timerStore.currentTimer?.time }}</p>
+            <q-linear-progress
+              v-if="timerStore.currentTimer?.isProgressBar"
+              reverse
+              stripe
+              rounded
+              size="30px"
+              :value="progress"
+              :color="progressColor"
+              class="q-mt-sm"
+            >
+            </q-linear-progress>
           </div>
           <div v-else class="stopTimer">
             <p class="stopTimer__message">TIME OUT</p>
@@ -222,8 +248,9 @@ const editTimer = ref<Timer | null>(null);
 const editOrDeleteTimerId = ref<number | null>(null);
 
 const title = ref('');
-const time = ref('00:15');
+const time = ref('00:00:15');
 const autoStop = ref(false);
+const isProgressBar = ref(true);
 
 const isCreateOrEditTimerModal = ref(false);
 const isDeleteTimerModal = ref(false);
@@ -231,6 +258,28 @@ const isRunningTimerModal = ref(false);
 
 const isValidForm = computed(() => {
   return title.value && title.value.length > 2 && time.value;
+});
+
+// ⏳ total en secondes pour le current timer
+const totalSeconds = computed(() => {
+  return timerStore.totalSeconds;
+});
+
+// ⏱️ seconds elapsed
+const elapsedSeconds = computed(() => timerStore.elapsedTime);
+
+// % progression
+const progress = computed(() => {
+  if (totalSeconds.value === 0) return 0;
+  return 1 - elapsedSeconds.value / totalSeconds.value;
+});
+
+// 🎨 Couleurs dynamiques
+const progressColor = computed(() => {
+  const pct = progress.value * 100;
+  if (pct > 50) return 'green';
+  if (pct > 25) return 'orange';
+  return 'red';
 });
 
 function openCreateOrEditTimerModal(timer?: Timer, timerId?: number) {
@@ -263,6 +312,7 @@ function submitTimer() {
     title: title.value,
     time: time.value,
     autoStop: autoStop.value,
+    isProgressBar: isProgressBar.value,
   };
 
   if (editTimer.value && (editOrDeleteTimerId.value || editOrDeleteTimerId.value === 0)) {
@@ -302,8 +352,9 @@ function deleteTimer() {
 
 function onReset() {
   title.value = '';
-  time.value = '00:15';
+  time.value = '00:00:15';
   autoStop.value = false;
+  isProgressBar.value = true;
   editTimer.value = null;
   editOrDeleteTimerId.value = null;
 }
