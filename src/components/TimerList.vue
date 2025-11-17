@@ -40,7 +40,7 @@
           <q-item-label
             >{{ timer.title }}
             <q-badge v-if="timer.autoStop" align="top" color="red"
-              >Time out activé</q-badge
+              >Time's up activé</q-badge
             ></q-item-label
           >
           <q-item-label caption lines="1">{{ timer.time }}</q-item-label>
@@ -132,7 +132,7 @@
               </template>
             </q-input>
 
-            <q-toggle v-model="autoStop" label='Afficher "TIME OUT" après la fin du temps ?' />
+            <q-toggle v-model="autoStop" label="Afficher 'TIME\'S UP' après la fin du temps ?" />
             <q-toggle v-model="isProgressBar" label="Activer la bar de progression ?" />
           </q-form>
         </q-card-section>
@@ -212,7 +212,7 @@
             </q-linear-progress>
           </div>
           <div v-else class="stopTimer">
-            <p class="stopTimer__message">TIME OUT</p>
+            <p class="stopTimer__message">TIME'S UP</p>
             <q-btn
               @click="continueTimer()"
               rounded
