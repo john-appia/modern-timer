@@ -1,21 +1,55 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import type { Timer } from 'src/components/models';
 
+const ONE_DAY = 24 * 60 * 60 * 1000;
+
 export const useTimerStore = defineStore('timer', {
   state: () => ({
     timers: [
       {
-        title: 'First timer',
-        time: '00:01:00',
-        autoStop: false,
+        title: 'Direction',
+        time: '00:30:00',
+        autoStop: true,
+        isProgressBar: true,
+      },
+      {
+        title: 'Louange',
+        time: '00:15:00',
+        autoStop: true,
         isProgressBar: true,
       },
     ] as (Timer & { _seconds?: number })[],
+    timerHistory: [] as Timer[],
     intervalId: null as number | null,
     autoStopTriggered: false,
     elapsedTime: 0,
     totalSeconds: 0,
+    lastUpdate: Date.now(),
   }),
+
+  persist: {
+    storage: localStorage,
+    omit: ['intervalId'],
+    afterHydrate(context) {
+      try {
+        const data = context.store.$state;
+
+        if (!data.lastUpdate) return;
+
+        const now = Date.now();
+        const diff = now - data.lastUpdate;
+
+        if (diff > ONE_DAY) {
+          console.warn('💥 Pinia persistence expired — resetting store');
+
+          // Reset propre du store après expiration
+          context.store.$reset();
+        }
+      } catch (err) {
+        console.error('Error restoring store:', err);
+      }
+    },
+  },
 
   getters: {
     isLimit: (state) => state.timers.length === 10,
@@ -82,12 +116,12 @@ export const useTimerStore = defineStore('timer', {
             return; // NE PAS SUPPRIMER LE TIMER, ON STOPPE !
           }
 
+          this.timerHistory.push({ ...this.timers[0]!, time: '00:00:00' });
           this.timers.shift();
 
           if (this.timers.length === 0) {
             this.stopTimer();
           } else {
-            // delete this.timers[0]!._seconds;
             const next = this.timers[0];
             delete next!._seconds;
 
@@ -120,11 +154,25 @@ export const useTimerStore = defineStore('timer', {
       this.autoStopTriggered = false;
 
       // Supprimer le timer terminé
+      this.timerHistory.push({ ...this.timers[0]!, time: '00:00:00' });
       this.timers.shift();
 
       if (this.timers.length > 0) {
         delete this.timers[0]!._seconds;
         this.startTimer(); // Reprendre
+      }
+    },
+    addHistoryToTimer() {
+      if (this.timerHistory.length) {
+        this.timers = [...this.timers, ...this.timerHistory];
+        this.timerHistory = [];
+      }
+    },
+    addSecondsToCurrentTimer(seconds: number) {
+      console.log(seconds);
+      if (this.timers[0]?._seconds) {
+        console.log(this.timers[0]);
+        this.timers[0]._seconds += seconds;
       }
     },
   },

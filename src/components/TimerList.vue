@@ -14,17 +14,6 @@
         >
           <q-tooltip class="bg-dark" :offset="[10, 10]"> ajouter </q-tooltip>
         </q-btn>
-        <!-- <q-btn
-          @click="openCreateOrEditTimerModal()"
-          flat
-          round
-          color="amber"
-          size="16px"
-          icon="play_circle"
-          class="col"
-        >
-          <q-tooltip class="bg-dark" :offset="[10, 10]"> Lancer </q-tooltip>
-        </q-btn> -->
       </div>
     </q-toolbar>
 
@@ -80,6 +69,36 @@
           <div class="text-center">Aucun timer</div>
         </q-item-section>
       </q-item>
+
+      <q-separator />
+
+      <q-expansion-item expand-separator icon="history" label="Historique">
+        <q-btn
+          v-if="timerStore.timerHistory.length"
+          flat
+          dense
+          no-caps
+          size="md"
+          color="primary"
+          label="charger dans la liste principale"
+          @click="timerStore.addHistoryToTimer()"
+        ></q-btn>
+        <q-item v-for="timer in timerStore.timerHistory" :key="timer.title" class="q-my-sm">
+          <q-item-section>
+            <q-item-label
+              >{{ timer.title }}
+              <q-badge v-if="timer.autoStop" align="top" color="red"
+                >Time's up activé</q-badge
+              ></q-item-label
+            >
+            <q-item-label caption lines="1">{{ timer.time }}</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-card flat v-if="!timerStore.timerHistory.length" class="q-my-sm text-center">
+          <q-card-section> L'historique est vide </q-card-section>
+        </q-card>
+      </q-expansion-item>
     </q-list>
 
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
@@ -174,8 +193,26 @@
       <q-card class="text-white" :class="timerStore.autoStopTriggered ? 'bg-red' : 'bg-dark'">
         <q-bar>
           <q-space />
-
-          <q-btn disable dense flat icon="double_arrow">
+          <!-- <q-select
+            outlined
+            bottom-slots
+            v-model="seconds"
+            :options="[ten, twenty, thirty]"
+            label="Ajouter des secondes"
+            dense
+            options-dense
+          >
+            <template v-slot:after>
+              <q-btn @click="addSeconds()" round dense flat icon="add" />
+            </template>
+          </q-select> -->
+          <q-btn
+            @click="timerStore.continueAfterAutoStop()"
+            :disable="!timerStore.currentTimer"
+            dense
+            flat
+            icon="double_arrow"
+          >
             <q-tooltip class="bg-white text-primary">suivant</q-tooltip>
           </q-btn>
           <q-btn
@@ -249,12 +286,17 @@ const editOrDeleteTimerId = ref<number | null>(null);
 
 const title = ref('');
 const time = ref('00:00:15');
-const autoStop = ref(false);
+const autoStop = ref(true);
 const isProgressBar = ref(true);
 
 const isCreateOrEditTimerModal = ref(false);
 const isDeleteTimerModal = ref(false);
 const isRunningTimerModal = ref(false);
+
+// const thirty = ref(30);
+// const twenty = ref(20);
+// const ten = ref(10);
+// const seconds = ref(10);
 
 const isValidForm = computed(() => {
   return title.value && title.value.length > 2 && time.value;
@@ -281,6 +323,10 @@ const progressColor = computed(() => {
   if (pct > 25) return 'orange';
   return 'red';
 });
+
+// function addSeconds() {
+//   timerStore.addSecondsToCurrentTimer(seconds.value);
+// }
 
 function openCreateOrEditTimerModal(timer?: Timer, timerId?: number) {
   if (timer) {
@@ -354,7 +400,7 @@ function deleteTimer() {
 function onReset() {
   title.value = '';
   time.value = '00:00:15';
-  autoStop.value = false;
+  autoStop.value = true;
   isProgressBar.value = true;
   editTimer.value = null;
   editOrDeleteTimerId.value = null;
