@@ -1,7 +1,7 @@
 import { defineStore, acceptHMRUpdate } from 'pinia';
 import type { Timer } from 'src/components/models';
 
-const ONE_DAY = 24 * 60 * 60 * 1000;
+const ONE_YEAR = 365 * 24 * 60 * 60 * 1000;
 
 export const useTimerStore = defineStore('timer', {
   state: () => ({
@@ -39,7 +39,7 @@ export const useTimerStore = defineStore('timer', {
         const now = Date.now();
         const diff = now - data.lastUpdate;
 
-        if (diff > ONE_DAY) {
+        if (diff > ONE_YEAR) {
           console.warn('💥 Pinia persistence expired — resetting store');
 
           // Reset propre du store après expiration
@@ -57,6 +57,10 @@ export const useTimerStore = defineStore('timer', {
   },
 
   actions: {
+    addNewProgramTimers(programTimers: Timer[]) {
+      this.timers = [...programTimers];
+    },
+
     addTimer(payload: Timer) {
       this.timers.push(payload);
     },

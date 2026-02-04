@@ -8,6 +8,10 @@
       <q-item-label>{{ title }}</q-item-label>
       <q-item-label caption>{{ caption }}</q-item-label>
     </q-item-section>
+
+    <q-item-section v-if="disable" side top>
+      <q-badge color="accent" label="Bientôt" />
+    </q-item-section>
   </q-item>
 </template>
 

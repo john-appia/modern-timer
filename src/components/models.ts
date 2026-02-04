@@ -13,3 +13,9 @@ export type Timer = {
   autoStop: boolean;
   isProgressBar: boolean;
 };
+
+export type Program = {
+  id?: number;
+  title: string;
+  timers: Timer[];
+};

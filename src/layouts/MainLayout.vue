@@ -46,11 +46,17 @@ const linksList: EssentialLinkProps[] = [
     link: '/',
   },
   {
+    title: 'Statistiques',
+    icon: 'bar_chart',
+    link: 'statistics',
+    disable: true,
+  },
+  {
     title: 'Paramètres',
     caption: "accéder au paramètres de l'application",
     icon: 'settings',
     link: 'settings',
-    disable: true,
+    disable: false,
   },
 ];
 

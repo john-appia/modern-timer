@@ -70,7 +70,7 @@
         </q-item-section>
       </q-item>
 
-      <q-separator />
+      <!-- <q-separator />
 
       <q-expansion-item expand-separator icon="history" label="Historique">
         <q-btn
@@ -98,7 +98,7 @@
         <q-card flat v-if="!timerStore.timerHistory.length" class="q-my-sm text-center">
           <q-card-section> L'historique est vide </q-card-section>
         </q-card>
-      </q-expansion-item>
+      </q-expansion-item> -->
     </q-list>
 
     <q-page-sticky position="bottom-right" :offset="[18, 18]">
@@ -162,7 +162,7 @@
             @click="submitTimer()"
             :disable="!isValidForm"
             flat
-            :label="editTimer ? 'Enregistrer' : 'Modifier'"
+            :label="!editTimer ? 'Enregistrer' : 'Modifier'"
             color="primary"
           />
         </q-card-actions>
@@ -234,7 +234,18 @@
 
         <q-card-section>
           <div v-if="!timerStore.autoStopTriggered" class="runningTimer text-center">
-            <p class="runningTimer__title">{{ timerStore.currentTimer?.title }}</p>
+            <p class="runningTimer__title">
+              <span class="marquee-wrapper">
+                <span
+                  v-if="timerStore.currentTimer"
+                  ref="titleRef"
+                  class="marquee"
+                  :class="{ 'marquee--active': isTitleTooLong }"
+                >
+                  {{ timerStore.currentTimer?.title }}
+                </span>
+              </span>
+            </p>
             <p class="runningTimer__time">{{ timerStore.currentTimer?.time }}</p>
             <q-linear-progress
               v-if="timerStore.currentTimer?.isProgressBar"
@@ -270,7 +281,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import type { Timer } from './models';
 import { useTimerStore } from 'src/stores/timer-store';
 import { useQuasar } from 'quasar';
@@ -293,10 +304,8 @@ const isCreateOrEditTimerModal = ref(false);
 const isDeleteTimerModal = ref(false);
 const isRunningTimerModal = ref(false);
 
-// const thirty = ref(30);
-// const twenty = ref(20);
-// const ten = ref(10);
-// const seconds = ref(10);
+const titleRef = ref<HTMLElement | null>(null);
+const isTitleTooLong = ref(false);
 
 const isValidForm = computed(() => {
   return title.value && title.value.length > 2 && time.value;
@@ -409,6 +418,24 @@ function onReset() {
 function continueTimer() {
   timerStore.continueAfterAutoStop();
 }
+
+// onMounted(() => checkTitleWidth());
+watch(
+  () => timerStore.currentTimer,
+  async (timer) => {
+    if (!timer) return;
+
+    await nextTick();
+
+    if (!titleRef.value) return;
+
+    const parent = titleRef.value.parentElement;
+    if (!parent) return;
+
+    isTitleTooLong.value = titleRef.value.scrollWidth > parent.clientWidth;
+  },
+  { immediate: true },
+);
 </script>
 
 <style lang="scss" scoped>
@@ -417,6 +444,10 @@ function continueTimer() {
     font-size: 130px;
     font-weight: bold;
     text-transform: uppercase;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-align: center;
   }
   &__time {
     font-size: 250px;
@@ -437,6 +468,35 @@ function continueTimer() {
     text-transform: uppercase;
     color: white;
     animation: tilt-shaking 0.3s infinite;
+  }
+}
+
+// .marquee-wrapper {
+//   display: block;
+//   width: 100%;
+//   overflow: hidden;
+//   white-space: nowrap;
+// }
+
+// .marquee {
+//   display: inline-block;
+//   white-space: nowrap;
+//   transform: translateX(0);
+// }
+
+/* Animation activée seulement si trop long */
+// .marquee--active {
+//   padding-left: 100%;
+//   animation: marquee 10s linear infinite;
+// }
+
+/* Animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(-20%);
+  }
+  100% {
+    transform: translateX(-100%);
   }
 }
 
